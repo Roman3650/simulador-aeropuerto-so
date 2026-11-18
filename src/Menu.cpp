@@ -1,5 +1,6 @@
 #include "Menu.hpp"
 
+#include "Paginacion.hpp"
 #include "Pantalla.hpp"
 
 #include <istream>
@@ -34,9 +35,9 @@ void Menu::ejecutar(std::istream& entrada, std::ostream& salida) {
 bool Menu::ejecutarPrincipal(std::istream& entrada, std::ostream& salida) {
     Pantalla::limpiar(salida);
     Pantalla::marcoPrincipal(salida, "SIMULADOR AEROPUERTO MANUEL CARLOS PIAR");
-    salida << "Carga de tráfico actual: " << nombreEscenario(configuracion_.escenario) << "\n\n";
+    salida << "Carga de trafico actual: " << nombreEscenario(configuracion_.escenario) << "\n\n";
     Pantalla::opcionPlana(salida, 1, "Configurar carga de vuelos");
-    Pantalla::opcionPlana(salida, 2, "Ejecutar Simulación de Pistas y Concurrencia");
+    Pantalla::opcionPlana(salida, 2, "Ejecutar Simulacion de Pistas y Concurrencia");
     Pantalla::opcionPlana(salida, 3, "Seleccionar y Ejecutar Algoritmo de Paginacion");
     Pantalla::opcionPlana(salida, 4, "Salir");
     salida << '\n';
@@ -105,8 +106,9 @@ void Menu::ejecutarPaginacion(std::istream& entrada, std::ostream& salida) {
     Pantalla::marco(salida, "PAGINACION");
     salida << "  Algoritmo: " << nombreAlgoritmo(configuracion_.algoritmo) << '\n';
     salida << "  Escenario: " << nombreEscenario(configuracion_.escenario) << "\n\n";
-    salida << "[PAGINACION - " << nombreAlgoritmo(configuracion_.algoritmo)
-           << "] Ejecucion pendiente para arrancar la simulacion.\n\n";
+    MemoriaRadar memoria(configuracion_.algoritmo, configuracion_.escenario);
+    memoria.ejecutar(salida);
+    salida << '\n';
     salida << "Presione ENTER para volver al menu...";
     salida.flush();
 
