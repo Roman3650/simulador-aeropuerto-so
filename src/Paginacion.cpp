@@ -23,7 +23,8 @@ void imprimirDireccion(std::ostream& salida, std::uint16_t direccion) {
 
 }
 
-std::vector<std::uint16_t> generarTraza(EscenarioCarga escenario) {
+std::vector<std::uint16_t> generarTraza(EscenarioCarga escenario,
+                                        std::size_t cantidadPersonalizada) {
     std::vector<int> paginas;
     switch (escenario) {
         case EscenarioCarga::Vuelos10:
@@ -42,6 +43,14 @@ std::vector<std::uint16_t> generarTraza(EscenarioCarga escenario) {
                 }
             }
             break;
+        case EscenarioCarga::Personalizado: {
+            const std::size_t total = cantidadPersonalizada == 0 ? 10 : cantidadPersonalizada;
+            for (std::size_t i = 0; i < total; ++i) {
+                const std::vector<int>& origen = i < total / 2 ? trazaInicial : trazaLocalidad;
+                paginas.push_back(origen[i % origen.size()]);
+            }
+            break;
+        }
     }
 
     std::vector<std::uint16_t> traza;
@@ -61,12 +70,16 @@ std::string_view nombreTraza(EscenarioCarga escenario) {
             return "ESTANDAR";
         case EscenarioCarga::Vuelos50:
             return "ESTRES";
+        case EscenarioCarga::Personalizado:
+            return "PERSONALIZADA";
     }
     return "DESCONOCIDA";
 }
 
-MemoriaRadar::MemoriaRadar(AlgoritmoReemplazo algoritmo, EscenarioCarga escenario)
-    : algoritmo_(algoritmo), escenario_(escenario), tabla_(cantidadPaginas),
+MemoriaRadar::MemoriaRadar(AlgoritmoReemplazo algoritmo, EscenarioCarga escenario,
+                           std::size_t cantidadPersonalizada)
+    : algoritmo_(algoritmo), escenario_(escenario),
+      cantidadPersonalizada_(cantidadPersonalizada), tabla_(cantidadPaginas),
       marcos_(cantidadMarcos) {
 }
 
@@ -88,7 +101,7 @@ void MemoriaRadar::ejecutar(std::ostream& salida) {
     std::lock_guard<std::mutex> bloqueo(mutex_);
     reiniciar();
 
-    const std::vector<std::uint16_t> traza = generarTraza(escenario_);
+    const std::vector<std::uint16_t> traza = generarTraza(escenario_, cantidadPersonalizada_);
     salida << "[PAGINACION - " << nombreAlgoritmo(algoritmo_) << "] Algoritmo: "
            << nombreAlgoritmo(algoritmo_) << " | Escenario: " << nombreEscenario(escenario_)
            << " | Marcos: " << cantidadMarcos << " | Pagina: "

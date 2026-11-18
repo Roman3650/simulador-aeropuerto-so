@@ -2,7 +2,9 @@
 
 #include "Paginacion.hpp"
 #include "Pantalla.hpp"
+#include "Sincronizacion.hpp"
 
+#include <cstddef>
 #include <istream>
 #include <ostream>
 #include <sstream>
@@ -22,7 +24,14 @@ AlgoritmoReemplazo aAlgoritmo(int opcion) {
 }
 
 EscenarioCarga aEscenario(int opcion) {
-    return opcion == 1 ? EscenarioCarga::Vuelos10 : EscenarioCarga::Vuelos50;
+    switch (opcion) {
+        case 1:
+            return EscenarioCarga::Vuelos10;
+        case 2:
+            return EscenarioCarga::Vuelos50;
+        default:
+            return EscenarioCarga::Personalizado;
+    }
 }
 
 }
@@ -35,7 +44,11 @@ void Menu::ejecutar(std::istream& entrada, std::ostream& salida) {
 bool Menu::ejecutarPrincipal(std::istream& entrada, std::ostream& salida) {
     Pantalla::limpiar(salida);
     Pantalla::marcoPrincipal(salida, "SIMULADOR AEROPUERTO MANUEL CARLOS PIAR");
-    salida << "Carga de trafico actual: " << nombreEscenario(configuracion_.escenario) << "\n\n";
+    salida << "Carga de trafico actual: " << nombreEscenario(configuracion_.escenario);
+    if (configuracion_.escenario == EscenarioCarga::Personalizado) {
+        salida << " (" << configuracion_.cantidadPersonalizada << " vuelos)";
+    }
+    salida << "\n\n";
     Pantalla::opcionPlana(salida, 1, "Configurar carga de vuelos");
     Pantalla::opcionPlana(salida, 2, "Ejecutar Simulacion de Pistas y Concurrencia");
     Pantalla::opcionPlana(salida, 3, "Seleccionar y Ejecutar Algoritmo de Paginacion");
@@ -53,6 +66,7 @@ bool Menu::ejecutarPrincipal(std::istream& entrada, std::ostream& salida) {
             configurarEscenario(entrada, salida);
             break;
         case 2:
+            ejecutarSincronizacion(entrada, salida);
             break;
         case 3:
             seleccionarAlgoritmo(entrada, salida);
@@ -88,17 +102,46 @@ void Menu::seleccionarAlgoritmo(std::istream& entrada, std::ostream& salida) {
 void Menu::configurarEscenario(std::istream& entrada, std::ostream& salida) {
     Pantalla::limpiar(salida);
     Pantalla::marco(salida, "ESCENARIO DE CARGA");
-    salida << "  Escenario actual: " << nombreEscenario(configuracion_.escenario) << "\n\n";
+    salida << "  Escenario actual: " << nombreEscenario(configuracion_.escenario);
+    if (configuracion_.escenario == EscenarioCarga::Personalizado) {
+        salida << " (" << configuracion_.cantidadPersonalizada << " vuelos)";
+    }
+    salida << "\n\n";
     Pantalla::opcion(salida, 1, "10 vuelos");
     Pantalla::opcion(salida, 2, "50 vuelos (estres)");
-    Pantalla::opcion(salida, 3, "Volver atras");
+    Pantalla::opcion(salida, 3, "Personalizada");
+    Pantalla::opcion(salida, 4, "Volver atras");
     salida << '\n';
 
-    const std::optional<int> opcion = leerEntero(entrada, salida, 1, 3);
-    if (!opcion || *opcion == 3) {
+    const std::optional<int> opcion = leerEntero(entrada, salida, 1, 4);
+    if (!opcion || *opcion == 4) {
         return;
     }
     configuracion_.escenario = aEscenario(*opcion);
+    if (configuracion_.escenario == EscenarioCarga::Personalizado) {
+        const std::optional<int> cantidad = leerEntero(entrada, salida, 1, 500);
+        if (!cantidad) {
+            return;
+        }
+        configuracion_.cantidadPersonalizada = static_cast<std::size_t>(*cantidad);
+    }
+}
+
+void Menu::ejecutarSincronizacion(std::istream& entrada, std::ostream& salida) {
+    Pantalla::limpiar(salida);
+    Pantalla::marco(salida, "PISTAS Y CONCURRENCIA");
+    salida << "  Vuelos: " << cantidadVuelos(configuracion_) << '\n';
+    salida << "  Unica pista con monitor TorreControl, mutex y condition_variable\n\n";
+    salida.flush();
+
+    ejecutarSimulacionPistas(cantidadVuelos(configuracion_));
+
+    salida << '\n';
+    salida << "Presione ENTER para volver al menu...";
+    salida.flush();
+
+    std::string linea;
+    std::getline(entrada, linea);
 }
 
 void Menu::ejecutarPaginacion(std::istream& entrada, std::ostream& salida) {
@@ -106,7 +149,8 @@ void Menu::ejecutarPaginacion(std::istream& entrada, std::ostream& salida) {
     Pantalla::marco(salida, "PAGINACION");
     salida << "  Algoritmo: " << nombreAlgoritmo(configuracion_.algoritmo) << '\n';
     salida << "  Escenario: " << nombreEscenario(configuracion_.escenario) << "\n\n";
-    MemoriaRadar memoria(configuracion_.algoritmo, configuracion_.escenario);
+    MemoriaRadar memoria(configuracion_.algoritmo, configuracion_.escenario,
+                         configuracion_.cantidadPersonalizada);
     memoria.ejecutar(salida);
     salida << '\n';
     salida << "Presione ENTER para volver al menu...";
@@ -155,6 +199,20 @@ std::string_view nombreEscenario(EscenarioCarga escenario) {
             return "10 vuelos";
         case EscenarioCarga::Vuelos50:
             return "50 vuelos (estres)";
+        case EscenarioCarga::Personalizado:
+            return "Personalizada";
     }
     return "Desconocido";
+}
+
+std::size_t cantidadVuelos(const ConfiguracionMenu& configuracion) {
+    switch (configuracion.escenario) {
+        case EscenarioCarga::Vuelos10:
+            return 10;
+        case EscenarioCarga::Vuelos50:
+            return 50;
+        case EscenarioCarga::Personalizado:
+            return configuracion.cantidadPersonalizada;
+    }
+    return 10;
 }

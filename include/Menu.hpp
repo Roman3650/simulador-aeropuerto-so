@@ -1,6 +1,7 @@
 #ifndef MENU_HPP
 #define MENU_HPP
 
+#include <cstddef>
 #include <iosfwd>
 #include <optional>
 #include <string_view>
@@ -13,12 +14,14 @@ enum class AlgoritmoReemplazo {
 
 enum class EscenarioCarga {
     Vuelos10,
-    Vuelos50
+    Vuelos50,
+    Personalizado
 };
 
 struct ConfiguracionMenu {
     AlgoritmoReemplazo algoritmo;
     EscenarioCarga escenario;
+    std::size_t cantidadPersonalizada = 25;
 };
 
 class Menu {
@@ -31,6 +34,7 @@ private:
     bool ejecutarPrincipal(std::istream& entrada, std::ostream& salida);
     void configurarEscenario(std::istream& entrada, std::ostream& salida);
     void seleccionarAlgoritmo(std::istream& entrada, std::ostream& salida);
+    void ejecutarSincronizacion(std::istream& entrada, std::ostream& salida);
     void ejecutarPaginacion(std::istream& entrada, std::ostream& salida);
 
     static std::optional<int> leerEntero(std::istream& entrada, std::ostream& salida,
@@ -39,5 +43,6 @@ private:
 
 std::string_view nombreAlgoritmo(AlgoritmoReemplazo algoritmo);
 std::string_view nombreEscenario(EscenarioCarga escenario);
+std::size_t cantidadVuelos(const ConfiguracionMenu& configuracion);
 
 #endif

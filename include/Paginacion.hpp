@@ -39,7 +39,8 @@ struct MetricasPaginacion {
     std::size_t pageFaults = 0;
 };
 
-std::vector<std::uint16_t> generarTraza(EscenarioCarga escenario);
+std::vector<std::uint16_t> generarTraza(EscenarioCarga escenario,
+                                        std::size_t cantidadPersonalizada = 0);
 std::string_view nombreTraza(EscenarioCarga escenario);
 
 class MemoriaRadar {
@@ -48,7 +49,8 @@ public:
     static constexpr std::size_t cantidadMarcos = 4;
     static constexpr unsigned bitsDireccion = 16;
 
-    MemoriaRadar(AlgoritmoReemplazo algoritmo, EscenarioCarga escenario);
+    MemoriaRadar(AlgoritmoReemplazo algoritmo, EscenarioCarga escenario,
+                 std::size_t cantidadPersonalizada = 0);
 
     void ejecutar(std::ostream& salida);
     Traduccion traducir(std::uint16_t direccionVirtual) const;
@@ -78,6 +80,7 @@ private:
 
     AlgoritmoReemplazo algoritmo_;
     EscenarioCarga escenario_;
+    std::size_t cantidadPersonalizada_ = 0;
     std::vector<PTE> tabla_;
     std::vector<MarcoFisico> marcos_;
     std::vector<int> colaFifo_;
