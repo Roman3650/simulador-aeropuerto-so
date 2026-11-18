@@ -38,8 +38,23 @@ void marco(std::ostream& salida, std::string_view titulo) {
     salida << '+' << borde << "+\n\n";
 }
 
+void marcoPrincipal(std::ostream& salida, std::string_view titulo) {
+    const std::string borde(ancho, '-');
+    salida << '+' << borde << "+\n\n";
+
+    const std::size_t util = ancho - 1;
+    const std::size_t longitud = titulo.size() > util ? util : titulo.size();
+    salida << "| " << titulo.substr(0, longitud)
+           << std::string(util - longitud, ' ') << "|\n";
+    salida << '+' << borde << "+\n\n";
+}
+
 void opcion(std::ostream& salida, int numero, std::string_view texto) {
     salida << "  " << numero << ") " << texto << '\n';
+}
+
+void opcionPlana(std::ostream& salida, int numero, std::string_view texto) {
+    salida << numero << ") " << texto << '\n';
 }
 
 }

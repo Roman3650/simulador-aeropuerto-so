@@ -29,9 +29,9 @@ private:
     ConfiguracionMenu configuracion_{AlgoritmoReemplazo::FIFO, EscenarioCarga::Vuelos10};
 
     bool ejecutarPrincipal(std::istream& entrada, std::ostream& salida);
-    void configurarAlgoritmo(std::istream& entrada, std::ostream& salida);
     void configurarEscenario(std::istream& entrada, std::ostream& salida);
-    void iniciarSimulacion(std::istream& entrada, std::ostream& salida);
+    void seleccionarAlgoritmo(std::istream& entrada, std::ostream& salida);
+    void ejecutarPaginacion(std::istream& entrada, std::ostream& salida);
 
     static std::optional<int> leerEntero(std::istream& entrada, std::ostream& salida,
                                          int minimo, int maximo);

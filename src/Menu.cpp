@@ -33,13 +33,12 @@ void Menu::ejecutar(std::istream& entrada, std::ostream& salida) {
 
 bool Menu::ejecutarPrincipal(std::istream& entrada, std::ostream& salida) {
     Pantalla::limpiar(salida);
-    Pantalla::marco(salida, "SIMULADOR AEROPUERTO MANUEL CARLOS PIAR");
-    salida << "  Algoritmo actual: " << nombreAlgoritmo(configuracion_.algoritmo) << '\n';
-    salida << "  Escenario actual: " << nombreEscenario(configuracion_.escenario) << "\n\n";
-    Pantalla::opcion(salida, 1, "Seleccionar algoritmo");
-    Pantalla::opcion(salida, 2, "Seleccionar escenario");
-    Pantalla::opcion(salida, 3, "Iniciar simulacion");
-    Pantalla::opcion(salida, 4, "Salir");
+    Pantalla::marcoPrincipal(salida, "SIMULADOR AEROPUERTO MANUEL CARLOS PIAR");
+    salida << "Carga de tráfico actual: " << nombreEscenario(configuracion_.escenario) << "\n\n";
+    Pantalla::opcionPlana(salida, 1, "Configurar carga de vuelos");
+    Pantalla::opcionPlana(salida, 2, "Ejecutar Simulación de Pistas y Concurrencia");
+    Pantalla::opcionPlana(salida, 3, "Seleccionar y Ejecutar Algoritmo de Paginacion");
+    Pantalla::opcionPlana(salida, 4, "Salir");
     salida << '\n';
 
     const std::optional<int> opcion = leerEntero(entrada, salida, 1, 4);
@@ -50,33 +49,39 @@ bool Menu::ejecutarPrincipal(std::istream& entrada, std::ostream& salida) {
 
     switch (*opcion) {
         case 1:
-            configurarAlgoritmo(entrada, salida);
-            break;
-        case 2:
             configurarEscenario(entrada, salida);
             break;
+        case 2:
+            break;
         case 3:
-            iniciarSimulacion(entrada, salida);
+            seleccionarAlgoritmo(entrada, salida);
             break;
     }
     return true;
 }
 
-void Menu::configurarAlgoritmo(std::istream& entrada, std::ostream& salida) {
-    Pantalla::limpiar(salida);
-    Pantalla::marco(salida, "ALGORITMO DE REEMPLAZO");
-    salida << "  Algoritmo actual: " << nombreAlgoritmo(configuracion_.algoritmo) << "\n\n";
-    Pantalla::opcion(salida, 1, "FIFO");
-    Pantalla::opcion(salida, 2, "LRU");
-    Pantalla::opcion(salida, 3, "Reloj (segunda oportunidad)");
-    Pantalla::opcion(salida, 4, "Volver atras");
-    salida << '\n';
+void Menu::seleccionarAlgoritmo(std::istream& entrada, std::ostream& salida) {
+    while (true) {
+        Pantalla::limpiar(salida);
+        Pantalla::marco(salida, "ALGORITMO DE REEMPLAZO");
+        salida << "  Algoritmo actual: " << nombreAlgoritmo(configuracion_.algoritmo) << "\n\n";
+        Pantalla::opcion(salida, 1, "FIFO");
+        Pantalla::opcion(salida, 2, "LRU");
+        Pantalla::opcion(salida, 3, "Reloj (segunda oportunidad)");
+        Pantalla::opcion(salida, 4, "Ejecutar");
+        Pantalla::opcion(salida, 5, "Volver atras");
+        salida << '\n';
 
-    const std::optional<int> opcion = leerEntero(entrada, salida, 1, 4);
-    if (!opcion || *opcion == 4) {
-        return;
+        const std::optional<int> opcion = leerEntero(entrada, salida, 1, 5);
+        if (!opcion || *opcion == 5) {
+            return;
+        }
+        if (*opcion == 4) {
+            ejecutarPaginacion(entrada, salida);
+            return;
+        }
+        configuracion_.algoritmo = aAlgoritmo(*opcion);
     }
-    configuracion_.algoritmo = aAlgoritmo(*opcion);
 }
 
 void Menu::configurarEscenario(std::istream& entrada, std::ostream& salida) {
@@ -95,12 +100,13 @@ void Menu::configurarEscenario(std::istream& entrada, std::ostream& salida) {
     configuracion_.escenario = aEscenario(*opcion);
 }
 
-void Menu::iniciarSimulacion(std::istream& entrada, std::ostream& salida) {
+void Menu::ejecutarPaginacion(std::istream& entrada, std::ostream& salida) {
     Pantalla::limpiar(salida);
-    Pantalla::marco(salida, "SIMULACION");
+    Pantalla::marco(salida, "PAGINACION");
     salida << "  Algoritmo: " << nombreAlgoritmo(configuracion_.algoritmo) << '\n';
     salida << "  Escenario: " << nombreEscenario(configuracion_.escenario) << "\n\n";
-    salida << "[SIMULACION] Inicio simulado (modulo pendiente).\n\n";
+    salida << "[PAGINACION - " << nombreAlgoritmo(configuracion_.algoritmo)
+           << "] Ejecucion pendiente para arrancar la simulacion.\n\n";
     salida << "Presione ENTER para volver al menu...";
     salida.flush();
 
@@ -112,7 +118,7 @@ std::optional<int> Menu::leerEntero(std::istream& entrada, std::ostream& salida,
                                     int minimo, int maximo) {
     std::string linea;
     while (true) {
-        salida << "Opcion: ";
+        salida << "Opcion:";
         salida.flush();
         if (!std::getline(entrada, linea)) {
             return std::nullopt;
